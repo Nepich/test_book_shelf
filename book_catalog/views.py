@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from django.contrib import auth
-from django.db.models import Q
+from django.db.models import Q, Avg
 from rest_framework import serializers, permissions
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -14,7 +14,8 @@ from .service import BooksFilter
 
 class BookListView(ListAPIView):
     """Views a list of books"""
-    queryset = Book.objects.all()
+    queryset = Book.objects.prefetch_related('book_genre', 'book_author', 'book_favorite').\
+        all().annotate(rating=Avg("book_rating__review_book_rating"))
     serializer_class = BookListSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = BooksFilter
@@ -22,7 +23,7 @@ class BookListView(ListAPIView):
 
 class BookDetailView(RetrieveAPIView):
     """Views a details of book"""
-    queryset = Book.objects.all()
+    queryset = Book.objects.prefetch_related('book_rating__review_user').all()
     serializer_class = BookDetailSerializer
 
 
